@@ -1,44 +1,48 @@
-"""
-Evaluating the results of a function
-
-Using Python decorators and parametrize to add multiple independent tests
-This allows each test to be evaluated independently
-"""
-
 import pytest
-from src.exercise import is_leap, month_days, next_day
+import src.exercise
+from tests.input_data import input_values
 
-@pytest.mark.parametrize('year, result, message', [
-                          (2021, False, "Regular year"),
-                          (2020, True, "Divisible by 4"),
-                          (2100, False, "Divisible by 100"),
-                          (2000, True, "Divisible by 400")
-                         ])
-def test_is_leap(year, result, message):
-    assert is_leap(year) == result, message
+# Define the parametrization based on the inputs from the input_data file
 
 
-@pytest.mark.parametrize('month, year, result, message', [
-                          (1, 2021, 31, "January"),
-                          (3, 2021, 31, "March"),
-                          (4, 2021, 30, "April"),
-                          (2, 2021, 28, "February non leap year"),
-                          (2, 2020, 29, "February leap year"),
-                         ])
-def test_month_days(month, year, result, message):
-    assert month_days(month, year) == result, message
+@pytest.mark.parametrize('value, result, message', input_values)
+def test_exercise(value, result, message):
+    """
+    Tests the code in src.exercise using the inputs from tests.input_data.
+    Asserts that what is printed in the terminal is the same as
+    the expected result.
 
+    Parameters:
+        value: list(str)
+            The values that are used as input for the test.
+            Usually strings, since we are simulating input from user.
+        result: list(str)
+            The expected output in the terminal, usually what the user prints
+        message: str
+            A hint string in case of an error
+    """
+    output = []
 
-@pytest.mark.parametrize('day, month, year, result, message',
-                         [
-                          (1, 1, 1999, (2, 1, 1999), "First day of the year"),
-                          (7, 6, 2020, (8, 6, 2020), "Normal day"),
-                          (28, 2, 2019, (1, 3, 2019), "Non Leap year"),
-                          (28, 2, 2020, (29, 2, 2020), "Leap year % 4"),
-                          (28, 2, 2000, (29, 2, 2000), "Leap year % 400"),
-                          (28, 2, 2100, (1, 3, 2100), "Non Leap year % 100"),
-                          (31, 10, 1999, (1, 11, 1999), "Last day of the month"),
-                          (31, 12, 1998, (1, 1, 1999), "Last day of the year"),
-                         ])
-def test_next_day(day, month, year, result, message):
-    assert next_day(day, month, year) == result, message
+    def mock_input(input_s=None):
+        """
+        Create a mock input, where each input is obtained from
+        the list of inputs. Appends the input to a list.
+
+        Parameters:
+            input_s: str
+                Input from the test exercise.
+        """
+        if input_s is not None:
+            output.append(input_s)
+        else:
+            output.append("")
+
+        return value.pop(0)
+
+    src.exercise.input = mock_input
+    #src.exercise.print = lambda s : output.append(s)
+    src.exercise.print = lambda *args: output.append(" ".join(map(str, args)))
+
+    src.exercise.main()
+
+    assert output == result, message
